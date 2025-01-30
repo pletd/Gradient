@@ -8,37 +8,9 @@ using namespace std;
 class Vector {
 private:
 	double* x;
-    unsigned int Lenght;
+	unsigned int Lenght;
 
 public:
-
-	/*Vector A(3);
-	Vector B(A);
-	cout << A << endl << B << endl;
-
-	A.SetLenght(10);
-	B.SetComponent(0, 111);
-	cout << A << endl << B << endl;
-
-	Vector C;
-	cin >> C;
-	cout << C << endl;
-
-	A = C;
-	C.SetComponent(0, 999);
-	cout << "eeeeee" << A << endl << C << endl;
-
-	Vector D = A + C;
-	Vector E = A - C;
-	Vector F = A * 2;
-	Vector G = 2 * A;
-	cout << D << endl << E << endl << F << endl << G << endl;
-	A += C;
-	cout << A << endl;
-	F -= G;
-	cout << F << endl;
-	G *= 10;
-	cout << G << endl;*/
 
 	Vector() {
 		Lenght = 1;
@@ -63,6 +35,16 @@ public:
 		x = new double[Lenght];
 		for (unsigned int i = 0; i < Lenght; i++) {
 			x[i] = A.x[i];
+		}
+	}
+
+	Vector(unsigned int N, double arrgs, ...) {
+		Lenght = N;
+		x = new double[Lenght];
+		double* p = &arrgs;
+		for (unsigned int i = 0; i < N; i++) {
+			x[i] = *p;
+			p++;
 		}
 	}
 
@@ -102,7 +84,7 @@ public:
 		}
 		this->SetLenght(newVec.Lenght);
 		for (unsigned int i = 0; i < Lenght; i++) {
-			this->SetComponent(i, newVec.x[i]);	
+			this->SetComponent(i, newVec.x[i]);
 		}
 		return *this;
 	}
@@ -137,7 +119,7 @@ public:
 Vector operator+(const Vector& left, const Vector& right) {
 	Vector res(left.Lenght);
 	for (unsigned int i = 0; i < res.Lenght; i++) {
-		res.SetComponent(i, (left.x[i] + right.x[i]) );
+		res.SetComponent(i, (left.x[i] + right.x[i]));
 	}
 	return res;
 }
@@ -168,10 +150,10 @@ Vector operator*(const double left, const Vector& right) {
 
 ostream& operator<< (ostream& out, const Vector& vec) {
 	out << "(";
-	for (unsigned int i = 0; i < vec.Lenght-1; i++) {
+	for (unsigned int i = 0; i < vec.Lenght - 1; i++) {
 		out << vec.x[i] << ", ";
 	}
-	out << vec.x[vec.Lenght-1] << ")";
+	out << vec.x[vec.Lenght - 1] << ")";
 	return out;
 }
 
@@ -198,52 +180,76 @@ Vector CalculateGradient(double(*f)(Vector&), Vector& x, double h) {
 		H.SetComponent(i, h);
 		Hminus = x - H;
 		Hplus = x + H;
-		res.SetComponent(i, (f(Hplus) - f(Hminus))*(1/(2*h)));
+		res.SetComponent(i, (f(Hplus) - f(Hminus)) * (1 / (2 * h)));
 		H.SetComponent(i, 0);
 	}
 	return res;
 }
 
-double TestFunction(Vector& x) {
-	return sin(0.5*pow(x.GetComponent(0),2) - 0.25 * pow(x.GetComponent(1), 2) + 3) * cos(2*x.GetComponent(0) + 1 + pow(M_E,x.GetComponent(1)));
-}
+struct Test {
+public:
+	double (*f)(Vector&);
+	const unsigned int FunctionDim;
+	Vector startX;
+	string functionName;
+
+	Test(double (*Func)(Vector&), const unsigned int FunctionDimensionCount, Vector startX, string funcName) : FunctionDim(FunctionDimensionCount) {
+		f = Func;
+		this->startX = startX;
+		functionName = funcName;
+	}
+};
+
+Test tests[] = {
+	{ [](Vector& x) { return sin(0.5 * pow(x.GetComponent(0),2) - 0.25 * pow(x.GetComponent(1), 2) + 3) * cos(2 * x.GetComponent(0) + 1 + pow(M_E,x.GetComponent(1))); },
+	  2, Vector(2, 0.1, 0.1), "sin(0.5x^2 - 0.25y^2+3)cos(2*x + 1 + e^y)"},
+	{ [](Vector& x) {return pow(x.GetComponent(0),2) + x.GetComponent(0) + 1; },
+	  1, Vector(1, 0), "x^2 + x + 1"},
+	{ [](Vector& x) {return pow(x.GetComponent(0) - 100,2); },
+	  1, Vector(1, 0), "(x-100)^2"}
+};
 
 int main()
 {
-	int counter = 0;
-	double h = 0.01; //for calc derivatives
-	const double eps = 0.00001;
-
-	const unsigned int FunctionDim = 2;
-
-	Vector startX(FunctionDim);
-	for (unsigned int i = 0; i < FunctionDim; i++) {
-		startX.SetComponent(i, 0.3*pow(-1,i));
-	}
-	
-	double lambda = 0.5; //speed param
+	int counter;
+	const double h = 0.01; //for calc derivatives
+	const double eps = 0.00001; //accuracy
+	const double lambda = 0.5; //speed param
 
 	Vector Grad;
 	Vector PrevX;
-	Vector CurX = startX;
+	Vector CurX;
+
+	int chose;
+
 	do {
-		cout << " Iter " << counter << endl;
-		cout << " Cur X " << CurX << endl;
-		PrevX = CurX;
-		Grad = CalculateGradient(TestFunction,CurX,h);
-		cout << " Grad " << Grad << endl;
-		CurX -= lambda * Grad;
-		counter++;
-		//cout << " DEBUG EPS " << abs(TestFunction(PrevX) - TestFunction(CurX)) << endl;
-	} while (counter<1000 && abs(TestFunction(PrevX)-TestFunction(CurX) > eps));
+		cout << " chose test function 0 - 2 	exit - 9" << endl;
+		for (int i = 0; i < 3; i++) {
+			cout << tests[i].functionName << endl;
+		}
+		cin >> chose;
+		if (chose != 9 && chose >= 0 && chose <= 2) {
+			counter = 0;
+			CurX = tests[chose].startX;
+			do {
+				cout << " Iter " << counter << endl;
+				cout << " Cur X " << CurX << endl;
+				PrevX = CurX;
+				Grad = CalculateGradient(tests[chose].f, CurX, h);
+				cout << " Grad " << Grad << endl;
+				CurX -= lambda * Grad;
+				counter++;
+			} while (counter < 1000 && abs(tests[chose].f(PrevX) - tests[chose].f(CurX) > eps));
 
-	if (abs(TestFunction(PrevX) - TestFunction(CurX) < eps)) {
-		cout << " Res: " << CurX << endl;
-		cout << " F = " << TestFunction(CurX) << endl;
-	}
-	else {
-		cout << " Answer not found in 1000 iterations " << endl;
-	}
-
+			if (abs(tests[chose].f(PrevX) - tests[chose].f(CurX) < eps)) {
+				cout << " Res: " << CurX << endl;
+				cout << " F = " << tests[chose].f(CurX) << endl;
+			}
+			else {
+				cout << " Answer not found in 1000 iterations " << endl;
+			}
+		}
+		cout << endl;
+	} while (chose != 9);
 	return 0;
 }
