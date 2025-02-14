@@ -76,7 +76,7 @@ public:
 	}
 
 	friend ostream& operator<< (ostream& out, const Vector& vec);
-	friend istream& operator>> (istream& in, const Vector& vec);
+	friend istream& operator>> (istream& in, Vector& vec);
 
 	Vector& operator=(const Vector& newVec) {
 		if (this == &newVec) {
@@ -228,6 +228,8 @@ int main()
 			cout << tests[i].functionName << endl;
 		}
 		cin >> chose;
+		cout << " Start X " << endl;
+		cout << tests[chose].startX << endl;
 		if (chose != 9 && chose >= 0 && chose <= 2) {
 			counter = 0;
 			CurX = tests[chose].startX;
